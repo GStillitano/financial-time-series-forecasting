@@ -1,4 +1,5 @@
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
+from datetime import date, timedelta
 
 
 SEED = 42
@@ -18,6 +19,17 @@ class ExperimentConfig:
     val_ratio: float = 0.09
     test_ratio: float = 0.10
     uses_technical_indicators: bool = False
+
+
+def current_end_date() -> str:
+    """Return tomorrow so yfinance's exclusive end includes the latest day."""
+    return (date.today() + timedelta(days=1)).isoformat()
+
+
+def materialize_config(config: ExperimentConfig, live: bool = False) -> ExperimentConfig:
+    if not live:
+        return config
+    return replace(config, end=current_end_date())
 
 
 OIL_CONFIG = ExperimentConfig(
@@ -117,4 +129,3 @@ BITCOIN_CONFIG = ExperimentConfig(
         "use_batch_norm": False,
     },
 )
-

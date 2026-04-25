@@ -130,6 +130,14 @@ PYTHONPATH=src python scripts/run_all.py
 
 Outputs are saved in `results/`.
 
+The default scripts keep the fixed date ranges used for the research experiments. If you want a future-oriented run that uses the current date as the data endpoint, you can use:
+
+```bash
+PYTHONPATH=src python scripts/run_all.py --live
+```
+
+The `--live` flag updates only the end date, so the default fixed-date baseline remains unchanged.
+
 ## Main Findings
 
 - Oil is the easiest series among the three, and both models perform well.

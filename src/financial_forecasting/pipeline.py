@@ -3,7 +3,7 @@ from pathlib import Path
 
 import matplotlib.pyplot as plt
 
-from financial_forecasting.config import BITCOIN_CONFIG, ExperimentConfig
+from financial_forecasting.config import BITCOIN_CONFIG, ExperimentConfig, materialize_config
 from financial_forecasting.data import download_series
 from financial_forecasting.features import flatten_lag_features, prepare_sequences
 from financial_forecasting.metrics import regression_summary
@@ -38,13 +38,18 @@ def save_prediction_plot(dates, y_true, y_pred, title: str, output_path: Path, l
     plt.close()
 
 
-def run_experiment(config: ExperimentConfig, results_dir: str | Path = "results") -> dict:
+def run_experiment(
+    config: ExperimentConfig,
+    results_dir: str | Path = "results",
+    live: bool = False,
+) -> dict:
     set_global_seed()
     results_path = Path(results_dir)
     results_path.mkdir(parents=True, exist_ok=True)
+    resolved_config = materialize_config(config, live=live)
 
-    data = download_series(config)
-    bundle = prepare_sequences(data, config)
+    data = download_series(resolved_config)
+    bundle = prepare_sequences(data, resolved_config)
 
     X_train_xgb = flatten_lag_features(bundle.X_train)
     X_val_xgb = flatten_lag_features(bundle.X_val)
@@ -55,7 +60,7 @@ def run_experiment(config: ExperimentConfig, results_dir: str | Path = "results"
         y_train=bundle.y_train,
         X_val=X_val_xgb,
         y_val=bundle.y_val,
-        params=config.xgb_params,
+        params=resolved_config.xgb_params,
     )
 
     xgb_train_pred = bundle.scaler_y.inverse_transform(
@@ -70,15 +75,18 @@ def run_experiment(config: ExperimentConfig, results_dir: str | Path = "results"
         y_train=bundle.y_train,
         X_val=bundle.X_val,
         y_val=bundle.y_val,
-        params=config.lstm_params,
+        params=resolved_config.lstm_params,
     )
 
     lstm_train_pred = bundle.scaler_y.inverse_transform(lstm_model.predict(bundle.X_train, verbose=0))
     lstm_test_pred = bundle.scaler_y.inverse_transform(lstm_model.predict(bundle.X_test, verbose=0))
 
     summary = {
-        "experiment": config.name,
-        "ticker": config.ticker,
+        "experiment": resolved_config.name,
+        "ticker": resolved_config.ticker,
+        "start": resolved_config.start,
+        "end": resolved_config.end,
+        "live_mode": live,
         "xgboost": {
             "train": regression_summary(bundle.y_train_real, xgb_train_pred),
             "test": regression_summary(bundle.y_test_real, xgb_test_pred),
@@ -97,43 +105,43 @@ def run_experiment(config: ExperimentConfig, results_dir: str | Path = "results"
             save_training_plot(
                 validation_zero[metric_key],
                 validation_one[metric_key],
-                f"{config.name.title()} XGBoost Training vs Validation Loss",
-                results_path / f"{config.name}_xgboost_loss.png",
+                f"{resolved_config.name.title()} XGBoost Training vs Validation Loss",
+                results_path / f"{resolved_config.name}_xgboost_loss.png",
             )
 
     save_prediction_plot(
         bundle.date_test,
         bundle.y_test_real,
         xgb_test_pred,
-        f"{config.name.title()} Close Price Forecast with XGBoost",
-        results_path / f"{config.name}_xgboost_predictions.png",
+        f"{resolved_config.name.title()} Close Price Forecast with XGBoost",
+        results_path / f"{resolved_config.name}_xgboost_predictions.png",
         "Predicted (XGBoost)",
     )
 
     save_training_plot(
         history.history["loss"],
         history.history["val_loss"],
-        f"{config.name.title()} LSTM Training vs Validation Loss",
-        results_path / f"{config.name}_lstm_loss.png",
+        f"{resolved_config.name.title()} LSTM Training vs Validation Loss",
+        results_path / f"{resolved_config.name}_lstm_loss.png",
     )
 
     save_prediction_plot(
         bundle.date_test,
         bundle.y_test_real,
         lstm_test_pred,
-        f"{config.name.title()} Close Price Forecast with LSTM",
-        results_path / f"{config.name}_lstm_predictions.png",
+        f"{resolved_config.name.title()} Close Price Forecast with LSTM",
+        results_path / f"{resolved_config.name}_lstm_predictions.png",
         "Predicted (LSTM)",
     )
 
-    summary_path = results_path / f"{config.name}_summary.json"
+    summary_path = results_path / f"{resolved_config.name}_summary.json"
     summary_path.write_text(json.dumps(summary, indent=2), encoding="utf-8")
     return summary
 
 
-def run_all(results_dir: str | Path = "results") -> list[dict]:
+def run_all(results_dir: str | Path = "results", live: bool = False) -> list[dict]:
     from financial_forecasting.config import OIL_CONFIG, TESLA_CONFIG
 
     configs = [OIL_CONFIG, TESLA_CONFIG, BITCOIN_CONFIG]
-    return [run_experiment(config, results_dir=results_dir) for config in configs]
+    return [run_experiment(config, results_dir=results_dir, live=live) for config in configs]
 
