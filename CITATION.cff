@@ -1,0 +1,19 @@
+cff-version: 1.2.0
+title: "Financial Time Series Forecasting"
+message: "If you use this repository, please cite it using the metadata below."
+type: software
+authors:
+  - family-names: "Aloisi"
+    given-names: "Davide"
+  - family-names: "Besteghi"
+    given-names: "Edoardo"
+  - family-names: "Stillitano"
+    given-names: "Giuseppe"
+abstract: "Comparison of XGBoost and LSTM for forecasting crude oil, Tesla, and Bitcoin closing prices."
+keywords:
+  - machine learning
+  - deep learning
+  - time series forecasting
+  - xgboost
+  - lstm
+  - finance

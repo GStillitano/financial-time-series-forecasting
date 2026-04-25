@@ -1,0 +1,9 @@
+matplotlib>=3.8
+numpy>=1.26
+pandas>=2.2
+scikit-learn>=1.4
+ta>=0.11
+tensorflow>=2.16
+xgboost>=2.0
+yfinance>=0.2
+
