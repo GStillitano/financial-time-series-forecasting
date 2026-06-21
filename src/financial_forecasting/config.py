@@ -1,3 +1,5 @@
+"""Module for experimental configurations for the forecasting models."""
+
 from dataclasses import dataclass, field, replace
 from datetime import date, timedelta
 
@@ -7,6 +9,7 @@ SEED = 42
 
 @dataclass(frozen=True)
 class ExperimentConfig:
+    """Dataclass holding all hyperparameters and settings for a specific experiment."""
     name: str
     ticker: str
     start: str
@@ -27,6 +30,7 @@ def current_end_date() -> str:
 
 
 def materialize_config(config: ExperimentConfig, live: bool = False) -> ExperimentConfig:
+    """Return a potentially modified config based on the execution mode (e.g., live)."""
     if not live:
         return config
     return replace(config, end=current_end_date())

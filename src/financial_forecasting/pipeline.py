@@ -1,6 +1,7 @@
+"""Module containing the main pipeline logic for running forecasting experiments."""
+
 import json
 from pathlib import Path
-
 import matplotlib.pyplot as plt
 
 from financial_forecasting.config import BITCOIN_CONFIG, ExperimentConfig, materialize_config
@@ -11,6 +12,7 @@ from financial_forecasting.models import fit_lstm, fit_xgboost, set_global_seed
 
 
 def save_training_plot(values_a: list[float], values_b: list[float], title: str, output_path: Path) -> None:
+    """Save a plot comparing two training metrics (e.g., train vs validation loss)."""
     plt.figure(figsize=(10, 5))
     plt.plot(values_a, label="Train Loss")
     plt.plot(values_b, label="Validation Loss")
@@ -25,6 +27,7 @@ def save_training_plot(values_a: list[float], values_b: list[float], title: str,
 
 
 def save_prediction_plot(dates, y_true, y_pred, title: str, output_path: Path, label: str) -> None:
+    """Save a plot comparing true values against predicted values over time."""
     plt.figure(figsize=(10, 5))
     plt.plot(dates, y_true, label="Actual", color="blue", alpha=0.7)
     plt.plot(dates, y_pred, label=label, color="green")
@@ -43,6 +46,10 @@ def run_experiment(
     results_dir: str | Path = "results",
     live: bool = False,
 ) -> dict:
+    """
+    Run a complete forecasting experiment for a given configuration.
+    This includes data downloading, feature engineering, model training, and evaluation.
+    """
     set_global_seed()
     results_path = Path(results_dir)
     results_path.mkdir(parents=True, exist_ok=True)
@@ -140,6 +147,7 @@ def run_experiment(
 
 
 def run_all(results_dir: str | Path = "results", live: bool = False) -> list[dict]:
+    """Run all predefined forecasting experiments sequentially."""
     from financial_forecasting.config import OIL_CONFIG, TESLA_CONFIG
 
     configs = [OIL_CONFIG, TESLA_CONFIG, BITCOIN_CONFIG]

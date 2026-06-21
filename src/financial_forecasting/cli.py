@@ -1,7 +1,10 @@
+"""Module for command-line interface utilities."""
+
 import argparse
 
 
 def build_parser(description: str) -> argparse.ArgumentParser:
+    """Build and return an argument parser with standard configuration options."""
     parser = argparse.ArgumentParser(description=description)
     parser.add_argument(
         "--live",

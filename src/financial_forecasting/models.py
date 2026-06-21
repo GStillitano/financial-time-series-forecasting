@@ -1,5 +1,6 @@
-import random
+"""Module containing machine learning models (XGBoost, LSTM) and training logic."""
 
+import random
 import numpy as np
 import tensorflow as tf
 import xgboost as xgb
@@ -12,6 +13,7 @@ from financial_forecasting.config import SEED
 
 
 def set_global_seed(seed: int = SEED) -> None:
+    """Set global seed for reproducibility across random, numpy, and tensorflow."""
     random.seed(seed)
     np.random.seed(seed)
     tf.random.set_seed(seed)
@@ -24,6 +26,7 @@ def fit_xgboost(
     y_val: np.ndarray,
     params: dict,
 ) -> tuple[xgb.XGBRegressor, dict]:
+    """Train an XGBoost regressor model on the provided data."""
     model = xgb.XGBRegressor(**params, eval_metric="rmse")
     model.fit(
         X_train,
@@ -36,6 +39,7 @@ def fit_xgboost(
 
 
 def build_lstm_model(input_shape: tuple[int, int], params: dict) -> Sequential:
+    """Construct and compile an LSTM neural network based on config parameters."""
     model = Sequential()
     model.add(Input(shape=input_shape))
 
@@ -73,6 +77,7 @@ def fit_lstm(
     y_val: np.ndarray,
     params: dict,
 ) -> tuple[Sequential, tf.keras.callbacks.History]:
+    """Train an LSTM model using early stopping on the validation set."""
     model = build_lstm_model((X_train.shape[1], X_train.shape[2]), params)
     callbacks = [
         EarlyStopping(

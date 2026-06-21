@@ -1,5 +1,6 @@
-from dataclasses import dataclass
+"""Module for feature engineering and sequence generation for ML models."""
 
+from dataclasses import dataclass
 import numpy as np
 import pandas as pd
 from sklearn.preprocessing import MinMaxScaler
@@ -9,6 +10,7 @@ from financial_forecasting.config import ExperimentConfig
 
 @dataclass
 class DatasetBundle:
+    """Dataclass holding all subsets of a split dataset and their scalers."""
     X_train: np.ndarray
     X_val: np.ndarray
     X_test: np.ndarray
@@ -26,13 +28,18 @@ class DatasetBundle:
 
 
 def prepare_sequences(data: pd.DataFrame, config: ExperimentConfig) -> DatasetBundle:
+    """
+    Prepare sequential features and targets, splitting into train, validation, and test sets.
+    """
     n_total = len(data)
+    # Define split indices
     train_end = int(n_total * config.train_ratio)
     val_end = int(n_total * (config.train_ratio + config.val_ratio))
 
     scaler_X = MinMaxScaler(feature_range=(-1, 1))
     scaler_y = MinMaxScaler(feature_range=(-1, 1))
 
+    # Fit scalers only on training data to prevent data leakage
     scaler_X.fit(data.loc[: train_end - 1, config.features])
     scaler_y.fit(data.loc[: train_end - 1, ["Close"]])
 
@@ -40,6 +47,7 @@ def prepare_sequences(data: pd.DataFrame, config: ExperimentConfig) -> DatasetBu
     y_all = scaler_y.transform(data[["Close"]])
     dates = pd.to_datetime(data["Date"]).to_numpy()
 
+    # Create sequences using the specified lag
     X_seq = []
     y_seq = []
     y_dates = []
@@ -52,9 +60,11 @@ def prepare_sequences(data: pd.DataFrame, config: ExperimentConfig) -> DatasetBu
     y_seq = np.array(y_seq).reshape(-1, 1)
     y_dates = np.array(y_dates)
 
+    # Calculate indices for sequences
     target_train_end = max(train_end - config.lag, 1)
     target_val_end = max(val_end - config.lag, target_train_end + 1)
 
+    # Split sequences into train, validation, and test
     X_train = X_seq[:target_train_end]
     X_val = X_seq[target_train_end:target_val_end]
     X_test = X_seq[target_val_end:]
@@ -86,5 +96,8 @@ def prepare_sequences(data: pd.DataFrame, config: ExperimentConfig) -> DatasetBu
 
 
 def flatten_lag_features(X: np.ndarray) -> np.ndarray:
+    """
+    Flatten the lag features to 2D for models like XGBoost.
+    """
     return X.reshape(X.shape[0], -1)
 
